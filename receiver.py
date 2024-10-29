@@ -15,10 +15,10 @@ def message_handler(address, *args, client_address=None):
         message = f"RECEIVED: ADDRESS[{address}] ARGS[{args_str}]"
     app.update_received_message(message)
     
-    # Remap integer values if remapping is enabled
+    # Remap values if remapping is enabled
     if app.remapping_enabled.get():
         try:
-            args = [app.remap_value(arg) if isinstance(arg, int) else arg for arg in args]
+            args = [app.remap_value(arg) if isinstance(arg, (int, float)) else arg for arg in args]
         except ValueError as e:
             app.update_status_message(f"Error: {str(e)}")
             return
@@ -76,20 +76,20 @@ class App(ctk.CTk):
         self.remapping_checkbox = ctk.CTkCheckBox(self, text="Enable Remapping", variable=self.remapping_enabled)
         self.remapping_checkbox.pack(pady=5)
 
-        # Add labels and entries for the integer range and float range
-        self.int_range_label = ctk.CTkLabel(self, text="Integer Range (min:max):")
-        self.int_range_label.pack(pady=5)
+        # Add labels and entries for the input and output ranges
+        self.input_range_label = ctk.CTkLabel(self, text="Input Range (min:max):")
+        self.input_range_label.pack(pady=5)
         
-        self.int_range_entry = ctk.CTkEntry(self)
-        self.int_range_entry.insert(0, "0:100")
-        self.int_range_entry.pack(pady=5)
+        self.input_range_entry = ctk.CTkEntry(self)
+        self.input_range_entry.insert(0, "0:100")
+        self.input_range_entry.pack(pady=5)
 
-        self.float_range_label = ctk.CTkLabel(self, text="Float Range (min:max):")
-        self.float_range_label.pack(pady=5)
+        self.output_range_label = ctk.CTkLabel(self, text="Output Range (min:max):")
+        self.output_range_label.pack(pady=5)
         
-        self.float_range_entry = ctk.CTkEntry(self)
-        self.float_range_entry.insert(0, "0:1")
-        self.float_range_entry.pack(pady=5)
+        self.output_range_entry = ctk.CTkEntry(self)
+        self.output_range_entry.insert(0, "0:1")
+        self.output_range_entry.pack(pady=5)
 
         self.server = None
         self.start_server()
@@ -146,11 +146,11 @@ class App(ctk.CTk):
 
     def remap_value(self, value):
         try:
-            int_min, int_max = map(int, self.int_range_entry.get().split(":"))
-            float_min, float_max = map(float, self.float_range_entry.get().split(":"))
-            if int_min >= int_max or float_min >= float_max:
+            input_min, input_max = map(float, self.input_range_entry.get().split(":"))
+            output_min, output_max = map(float, self.output_range_entry.get().split(":"))
+            if input_min >= input_max or output_min >= output_max:
                 raise ValueError("Invalid range values.")
-            return float_min + (float_max - float_min) * (value - int_min) / (int_max - int_min)
+            return output_min + (output_max - output_min) * (value - input_min) / (input_max - input_min)
         except ValueError:
             raise ValueError("Invalid range format. Please use min:max format.")
 
