@@ -2,6 +2,7 @@ import threading
 import customtkinter as ctk
 from pythonosc.dispatcher import Dispatcher
 from pythonosc.osc_server import ThreadingOSCUDPServer
+from pythonosc.udp_client import SimpleUDPClient
 
 # Handle incoming OSC messages
 def message_handler(address, *args, client_address=None):
@@ -13,6 +14,12 @@ def message_handler(address, *args, client_address=None):
     else:
         message = f"RECEIVED: ADDRESS[{address}] ARGS[{args_str}]"
     app.update_received_message(message)
+    
+    # Forward the message to the target address and port
+    if app.forwarding_enabled.get():
+        target_ip, target_port = app.get_target_ip_port()
+        forward_client = SimpleUDPClient(target_ip, target_port)
+        forward_client.send_message(address, args)
 
 # Custom OSC UDP Server to include client address
 class CustomOSCUDPServer(ThreadingOSCUDPServer):
@@ -26,7 +33,7 @@ class App(ctk.CTk):
     def __init__(self):
         super().__init__()
         self.title("OSC Message Receiver")
-        self.geometry("500x500")
+        self.geometry("500x600")
 
         # Add a label for the port entry
         self.port_label = ctk.CTkLabel(self, text="Port:")
@@ -36,13 +43,25 @@ class App(ctk.CTk):
         self.port_entry.insert(0, "5006")
         self.port_entry.pack(pady=5)
 
+        # Add a label and entry for the target IP and port
+        self.target_label = ctk.CTkLabel(self, text="Forward to IP:Port:")
+        self.target_label.pack(pady=5)
+        
+        self.target_entry = ctk.CTkEntry(self)
+        self.target_entry.insert(0, "127.0.0.1:5007")
+        self.target_entry.pack(pady=5)
+
+        # Add a checkbox to enable/disable forwarding
+        self.forwarding_enabled = ctk.BooleanVar()
+        self.forwarding_checkbox = ctk.CTkCheckBox(self, text="Enable Forwarding", variable=self.forwarding_enabled)
+        self.forwarding_checkbox.pack(pady=5)
+
+        # Add a button to start the server
         ctk.CTkButton(self, text="Start Server", command=self.start_server).pack(pady=20)
+        
+        # Add a text box to display received messages
         self.message_text = ctk.CTkTextbox(self, height=20, width=60, font=("Courier", 12))
         self.message_text.pack(pady=10, padx=20, fill="both", expand=True)
-
-        # Configure tags for colored text
-        self.message_text.tag_config("green", foreground="green")
-        self.message_text.tag_config("cyan", foreground="cyan")
 
         self.server = None
         self.start_server()
@@ -91,6 +110,11 @@ class App(ctk.CTk):
         self.server = CustomOSCUDPServer((server_address, port), disp)
         self.update_status_message(f"Serving on {self.server.server_address}")
         self.server.serve_forever()
+
+    def get_target_ip_port(self):
+        target = self.target_entry.get()
+        ip, port = target.split(":")
+        return ip, int(port)
 
 # Run the application
 if __name__ == "__main__":
