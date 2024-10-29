@@ -14,6 +14,6 @@ To build executables, follow these steps:
 2. Run the following command to create the executable with the specified name and icon:
 
    ```sh
-   pyinstaller --onefile --windowed --name=SimpleOSCReceiver --icon=icon.ico receiver.py
+   pyinstaller --onefile --windowed --name=SimpleOSCReceiver --icon=receiver.ico receiver.py
 
-   pyinstaller --onefile --windowed --name=SimpleOSCSender --icon=icon.ico sender.py
+   pyinstaller --onefile --windowed --name=SimpleOSCSender --icon=sender.ico sender.py
