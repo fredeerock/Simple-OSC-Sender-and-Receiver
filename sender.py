@@ -19,7 +19,7 @@ class App(ctk.CTk):
         self.geometry("500x600")
 
         self.ip_entry, self.port_entry = self.create_entry("IP Address:", "127.0.0.1"), self.create_entry("Port:", "5006")
-        self.address_entry, self.message_entry = self.create_entry("OSC Address Pattern:", "/test"), self.create_entry("Message:", "Hello")
+        self.address_entry, self.message_entry = self.create_entry("Address:", "/test"), self.create_entry("Message:", "Hello")
 
         ctk.CTkButton(self, text="Send Message", command=self.send_message).pack(pady=20)
         self.message_text = ctk.CTkTextbox(self, height=20, width=60, font=("Courier", 12), bg_color="#2b2b2b", text_color="#d6d6d6")

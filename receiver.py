@@ -4,11 +4,22 @@ from pythonosc.dispatcher import Dispatcher
 from pythonosc.osc_server import ThreadingOSCUDPServer
 
 # Handle incoming OSC messages
-def message_handler(address, *args):
+def message_handler(address, *args, client_address=None):
     # Convert the list of arguments to a string with single quotes around strings
     args_str = ", ".join(f"'{arg}'" if isinstance(arg, str) else str(arg) for arg in args)
-    message = f"RECEIVED: ADDRESS[{address}] ARGS[{args_str}]"
+    if client_address:
+        ip, port = client_address
+        message = f"RECEIVED: IP[{ip}] ADDRESS[{address}] ARGS[{args_str}]"
+    else:
+        message = f"RECEIVED: ADDRESS[{address}] ARGS[{args_str}]"
     app.update_received_message(message)
+
+# Custom OSC UDP Server to include client address
+class CustomOSCUDPServer(ThreadingOSCUDPServer):
+    def verify_request(self, request, client_address):
+        data, _ = request
+        self.dispatcher.call_handlers_for_packet(data, client_address)
+        return False
 
 # GUI Application
 class App(ctk.CTk):
@@ -77,7 +88,7 @@ class App(ctk.CTk):
 
         # Create and start the UDP server
         server_address = "127.0.0.1"
-        self.server = ThreadingOSCUDPServer((server_address, port), disp)
+        self.server = CustomOSCUDPServer((server_address, port), disp)
         self.update_status_message(f"Serving on {self.server.server_address}")
         self.server.serve_forever()
 
