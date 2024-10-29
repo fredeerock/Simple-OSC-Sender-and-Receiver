@@ -15,6 +15,14 @@ def message_handler(address, *args, client_address=None):
         message = f"RECEIVED: ADDRESS[{address}] ARGS[{args_str}]"
     app.update_received_message(message)
     
+    # Remap integer values if remapping is enabled
+    if app.remapping_enabled.get():
+        try:
+            args = [app.remap_value(arg) if isinstance(arg, int) else arg for arg in args]
+        except ValueError as e:
+            app.update_status_message(f"Error: {str(e)}")
+            return
+
     # Forward the message to the target address and port
     if app.forwarding_enabled.get():
         target_ip, target_port = app.get_target_ip_port()
@@ -33,15 +41,27 @@ class App(ctk.CTk):
     def __init__(self):
         super().__init__()
         self.title("OSC Message Receiver")
-        self.geometry("500x600")
+        self.geometry("500x700")
 
         # Add a label for the port entry
-        self.port_label = ctk.CTkLabel(self, text="Port:")
+        self.port_label = ctk.CTkLabel(self, text="Listening Port:")
         self.port_label.pack(pady=5)
         
         self.port_entry = ctk.CTkEntry(self)
         self.port_entry.insert(0, "5006")
         self.port_entry.pack(pady=5)
+
+        # Add a button to start the server
+        ctk.CTkButton(self, text="Start Server", command=self.start_server).pack(pady=20)
+
+        # Add a text box to display received messages
+        self.message_text = ctk.CTkTextbox(self, height=20, width=60, font=("Courier", 12))
+        self.message_text.pack(pady=10, padx=20, fill="both", expand=True)
+
+        # Add a checkbox to enable/disable forwarding
+        self.forwarding_enabled = ctk.BooleanVar()
+        self.forwarding_checkbox = ctk.CTkCheckBox(self, text="Enable Forwarding", variable=self.forwarding_enabled)
+        self.forwarding_checkbox.pack(pady=5)
 
         # Add a label and entry for the target IP and port
         self.target_label = ctk.CTkLabel(self, text="Forward to IP:Port:")
@@ -51,17 +71,25 @@ class App(ctk.CTk):
         self.target_entry.insert(0, "127.0.0.1:5007")
         self.target_entry.pack(pady=5)
 
-        # Add a checkbox to enable/disable forwarding
-        self.forwarding_enabled = ctk.BooleanVar()
-        self.forwarding_checkbox = ctk.CTkCheckBox(self, text="Enable Forwarding", variable=self.forwarding_enabled)
-        self.forwarding_checkbox.pack(pady=5)
+        # Add a checkbox to enable/disable remapping
+        self.remapping_enabled = ctk.BooleanVar()
+        self.remapping_checkbox = ctk.CTkCheckBox(self, text="Enable Remapping", variable=self.remapping_enabled)
+        self.remapping_checkbox.pack(pady=5)
 
-        # Add a button to start the server
-        ctk.CTkButton(self, text="Start Server", command=self.start_server).pack(pady=20)
+        # Add labels and entries for the integer range and float range
+        self.int_range_label = ctk.CTkLabel(self, text="Integer Range (min:max):")
+        self.int_range_label.pack(pady=5)
         
-        # Add a text box to display received messages
-        self.message_text = ctk.CTkTextbox(self, height=20, width=60, font=("Courier", 12))
-        self.message_text.pack(pady=10, padx=20, fill="both", expand=True)
+        self.int_range_entry = ctk.CTkEntry(self)
+        self.int_range_entry.insert(0, "0:100")
+        self.int_range_entry.pack(pady=5)
+
+        self.float_range_label = ctk.CTkLabel(self, text="Float Range (min:max):")
+        self.float_range_label.pack(pady=5)
+        
+        self.float_range_entry = ctk.CTkEntry(self)
+        self.float_range_entry.insert(0, "0:1")
+        self.float_range_entry.pack(pady=5)
 
         self.server = None
         self.start_server()
@@ -115,6 +143,16 @@ class App(ctk.CTk):
         target = self.target_entry.get()
         ip, port = target.split(":")
         return ip, int(port)
+
+    def remap_value(self, value):
+        try:
+            int_min, int_max = map(int, self.int_range_entry.get().split(":"))
+            float_min, float_max = map(float, self.float_range_entry.get().split(":"))
+            if int_min >= int_max or float_min >= float_max:
+                raise ValueError("Invalid range values.")
+            return float_min + (float_max - float_min) * (value - int_min) / (int_max - int_min)
+        except ValueError:
+            raise ValueError("Invalid range format. Please use min:max format.")
 
 # Run the application
 if __name__ == "__main__":
