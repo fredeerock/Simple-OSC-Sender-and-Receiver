@@ -4,6 +4,9 @@ There are 2 programs here, 1 that can send OSC data (SimpleOSCSender) and the ot
 ![alt text](image-2.png|width=100)
 ![alt text](image-1.png|width=100)
 
+<img src="image-2.png" width=250px>
+<img src="image-1.png" width=250px>
+
 ## Building the Executable
 
 To build executables, follow these steps:
