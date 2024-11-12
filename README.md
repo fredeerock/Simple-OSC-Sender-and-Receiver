@@ -1,11 +1,8 @@
 # Simple OSC Sender and Receiver
 There are 2 programs here, 1 that can send OSC data (SimpleOSCSender) and the other that can receive (SimpleOSCReceiver). They both have simple GUI's that can be downloaded from the "releases" page.
 
-![alt text](image-2.png|width=100)
-![alt text](image-1.png|width=100)
-
-<img src="image-2.png" width=250px>
-<img src="image-1.png" width=250px>
+<img src="image-2.png" width=350px>
+<img src="image-1.png" width=350px>
 
 ## Building the Executable
 
